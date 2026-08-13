@@ -36,7 +36,17 @@ jobs:
 
       - name: Build VST3 and Standalone
         shell: pwsh
-        run: cmake --build build --config Release --target UCGInfinity16X_VST3 UCGInfinity16X_Standalone --parallel 2
+        run: |
+          $output = & cmake --build build --config Release --target UCGInfinity16X_VST3 UCGInfinity16X_Standalone --parallel 2 2>&1
+          $output | ForEach-Object { Write-Host $_ }
+          if ($LASTEXITCODE -ne 0) {
+            $errors = $output | Where-Object { $_ -match "error C[0-9]+|fatal error|LNK[0-9]+|FAILED" }
+            if (-not $errors) { $errors = $output | Select-Object -Last 50 }
+            $message = (($errors | Select-Object -Last 45) -join " | ")
+            $message = $message.Replace("%", "%25").Replace("`r", "%0D").Replace("`n", "%0A")
+            Write-Host "::error title=C++ build failed::$message"
+            exit 1
+          }
 
       - name: Prepare installer payload
         shell: pwsh
