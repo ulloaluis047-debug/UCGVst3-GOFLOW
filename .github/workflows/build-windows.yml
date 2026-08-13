@@ -20,11 +20,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configure
         shell: pwsh
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+        run: |
+          $output = & cmake -S . -B build -G "Visual Studio 17 2022" -A x64 2>&1
+          $output | ForEach-Object { Write-Host $_ }
+          if ($LASTEXITCODE -ne 0) {
+            $message = (($output | Select-Object -Last 35) -join " | ")
+            $message = $message.Replace("%", "%25").Replace("`r", "%0D").Replace("`n", "%0A")
+            Write-Host "::error title=CMake configuration failed::$message"
+            exit 1
+          }
 
       - name: Build VST3 and Standalone
         shell: pwsh
