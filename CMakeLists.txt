@@ -25,6 +25,8 @@ juce_add_plugin(UCGInfinity16X
   EDITOR_WANTS_KEYBOARD_FOCUS TRUE
   COPY_PLUGIN_AFTER_BUILD FALSE)
 
+juce_generate_juce_header(UCGInfinity16X)
+
 target_sources(UCGInfinity16X PRIVATE
   Source/PluginProcessor.cpp
   Source/PluginProcessor.h
