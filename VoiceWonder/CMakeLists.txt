@@ -10,7 +10,7 @@ FetchContent_Declare(JUCE
   GIT_SHALLOW TRUE)
 FetchContent_Declare(signalsmith_stretch
   GIT_REPOSITORY https://github.com/Signalsmith-Audio/signalsmith-stretch.git
-  GIT_TAG 1.0.0
+  GIT_TAG 57b93f4e9206a089a45387eaa39bdc9f310d3308
   GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(JUCE signalsmith_stretch)
 
@@ -67,4 +67,3 @@ target_link_libraries(VoiceWonderSmoke PRIVATE
   juce::juce_audio_formats
   juce::juce_dsp
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags)
-
