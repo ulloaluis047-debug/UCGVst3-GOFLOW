@@ -1,4 +1,4 @@
-name: Build Windows VST3
+name: Build UCG Voice Wonder Pro
 on: [workflow_dispatch, push]
 jobs:
   build:
@@ -6,11 +6,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: lukka/get-cmake@latest
-      - name: Configure
-        run: cmake -S VoiceWonder -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
-      - name: Build
-        run: cmake --build build --config Release --target UCGVoiceWonder_VST3
+      - name: Configure Release x64
+        run: cmake -S VoiceWonder -B build-voicewonder -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+      - name: Build VST3 and smoke test
+        run: cmake --build build-voicewonder --config Release --target UCGVoiceWonder_VST3 VoiceWonderSmoke
+      - name: Run continuous-audio validation
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          & "build-voicewonder/VoiceWonderSmoke_artefacts/Release/Voice Wonder DSP Smoke Test.exe" | Tee-Object -FilePath dist/DSP-TEST.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Stage portable VST3
+        shell: pwsh
+        run: |
+          Copy-Item -Recurse -Force "build-voicewonder/UCGVoiceWonder_artefacts/Release/VST3/UCG Voice Wonder.vst3" "dist/UCG Voice Wonder.vst3"
+          Compress-Archive -Force -Path "dist/UCG Voice Wonder.vst3","VoiceWonder/README.md","VoiceWonder/THIRD_PARTY_LICENSES.md","dist/DSP-TEST.txt" -DestinationPath "dist/UCG-Voice-Wonder-Pro-PORTABLE.zip"
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Build automatic installer
+        shell: pwsh
+        run: '& "C:/Program Files (x86)/Inno Setup 6/ISCC.exe" "VoiceWonder/Installer/VoiceWonder.iss"'
       - uses: actions/upload-artifact@v4
         with:
-          name: UCG-Voice-Wonder-Windows-VST3
-          path: build/UCGVoiceWonder_artefacts/Release/VST3/**
+          name: UCG-Voice-Wonder-Pro-Windows-x64
+          path: |
+            dist/UCG-Voice-Wonder-Pro-Setup.exe
+            dist/UCG-Voice-Wonder-Pro-PORTABLE.zip
+            dist/DSP-TEST.txt
+          if-no-files-found: error
+
